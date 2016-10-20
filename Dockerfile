@@ -10,9 +10,9 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -q -y --fix-missing
-RUN apt-get upgrade -q -y
+RUN apt-get upgrade -q -y --fix-missing
 
-RUN apt-get install -q -y wget bzip2
+RUN apt-get install -q -y --fix-missing wget g++ bzip2 swi-prolog
 
 RUN apt-get clean -q
 
@@ -34,12 +34,20 @@ RUN conda install -y flask
 
 # Add the application code to the Docker image.
 
-ADD app/ /app/
+ADD app /app
+ADD ext /ext
 
+# Compile Boxer.
+
+RUN cd /ext/boxer && \
+    make && \
+    make bin/boxer && \
+    make bin/tokkie && \
+    tar -xjvf models-1.02.tbz2
 
 # Run server.
 
 EXPOSE 5000
 
 WORKDIR /app
-CMD ./app.py
+#CMD ./app.py
