@@ -12,7 +12,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -q -y --fix-missing
 RUN apt-get upgrade -q -y --fix-missing
 
-RUN apt-get install -q -y --fix-missing wget g++ bzip2 swi-prolog
+RUN apt-get install -q -y --fix-missing wget g++ bzip2 flex bison swi-prolog \
+    libssl-dev zlib1g-dev
 
 RUN apt-get clean -q
 
@@ -32,22 +33,34 @@ RUN conda update -y conda
 RUN conda install -y flask
 
 
-# Add the application code to the Docker image.
+# Add the C&C pipeline and compile.
 
-ADD app /app
-ADD ext /ext
+ADD ext /interpret/ext
 
-# Compile Boxer.
-
-RUN cd /ext/boxer && \
+RUN cd /interpret/ext/candc/ext && \
+    tar -xjvf gsoap-2.8.16.tbz2 && \
+    cd gsoap-2.8 && \
+    ./configure --prefix=/interpret/ext/candc/ext && \
     make && \
+    make install && \
+    cd ../.. && \
+    make && \
+    make bin/t && \
     make bin/boxer && \
-    make bin/tokkie && \
+    make soap && \
     tar -xjvf models-1.02.tbz2
 
-# Run server.
+
+# Add the application code to the Docker image.
+
+ADD app /interpret/app
+
+ADD server /interpret
+
+
+# Run our server.
 
 EXPOSE 5000
 
-WORKDIR /app
-#CMD ./app.py
+WORKDIR /interpret
+CMD ["./server"]

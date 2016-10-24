@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd ext/candc
+./bin/soap_server --server localhost:8888 \
+                  --models models/boxer \
+                  --candc-printer boxer \
+                  > /dev/null 2> /dev/null &
+cd ../../app
+./app.py
