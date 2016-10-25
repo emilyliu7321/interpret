@@ -18,25 +18,24 @@ def parse():
                 ['/interpret/ext/candc/bin/soap_client',
                  '--url', 'localhost:8888'],
                 ['/interpret/ext/candc/bin/boxer', '--stdin',
-                 '--semantics=fol']]
+                 '--semantics', 'tacitus']]
 
     err = ''
-    data = request.get_json(force=True)['s'].encode()
+    data = request.get_json(force=True)['s'] + '\n'
+    data = data.encode()
 
     for cmd in commands:
         try:
             p = sub.run(cmd, input=data, stdout=sub.PIPE,
                         stderr=sub.PIPE)
-            print()
-            print(data)
-            print(p)
-            print()
             data = p.stdout
         except Exception as e:
             err = 'Exception communicating with ' + cmd + '\n' + str(e)
             break
 
-    return json.dumps({'out': str(data), 'err': err})
+    out = data.decode()
+
+    return json.dumps({'out': out, 'err': err})
 
 
 if __name__ == '__main__':
