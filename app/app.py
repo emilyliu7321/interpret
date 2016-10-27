@@ -1,28 +1,34 @@
 #!/usr/bin/env python3
 
-import json
-
 import subprocess as sub
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
+
+from process import process_boxer
+
+# Parameters
+
+# Nonmerge constraints to introduce:
+# - samepred: Arguments of a predicate cannot be merged.
+# - sameid: arguments of predicates with the same ID cannot be merged.
+# - freqpred: Arguments of frequent predicates cannot be merged.
+nonmerge = ['samepred', 'sameid', 'freqpred']
+
 
 app = Flask(__name__)
 
-@app.route('/')
-def main():
-    return None
-
 @app.route('/parse', methods=['POST'])
 def parse():
-    commands = [['/interpret/ext/candc/bin/t', '--stdin'],
+    commands = [['/interpret/ext/candc/bin/t',
+                 '--stdin'],
                 ['/interpret/ext/candc/bin/soap_client',
                  '--url', 'localhost:8888'],
-                ['/interpret/ext/candc/bin/boxer', '--stdin',
-                 '--semantics', 'tacitus']]
+                ['/interpret/ext/candc/bin/boxer',
+                 '--stdin',
+                 '--semantics', 'tacitus',
+                 '--resolve', 'true']]
 
-    err = ''
-    data = request.get_json(force=True)['s'] + '\n'
-    data = data.encode()
+    data = request.get_json(force=True)['s'].encode() + b'\n'
 
     for cmd in commands:
         try:
@@ -30,12 +36,11 @@ def parse():
                         stderr=sub.PIPE)
             data = p.stdout
         except Exception as e:
-            err = 'Exception communicating with ' + cmd + '\n' + str(e)
+            return jsonify({'error': 'Exception communicating with ' + cmd +
+                            '\n' + str(e)})
             break
 
-    out = data.decode()
-
-    return json.dumps({'out': out, 'err': err})
+    return jsonify({'parse': process_boxer(data.decode(), nonmerge)})
 
 
 if __name__ == '__main__':
