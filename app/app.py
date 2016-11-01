@@ -7,7 +7,11 @@ from flask import Flask, request, jsonify
 
 from process import process_boxer
 
+
 # Parameters
+
+# Maximum seconds to take processing a request
+timeout = 180
 
 # Nonmerge constraints to introduce:
 # - samepred: Arguments of a predicate cannot be merged.
@@ -15,20 +19,21 @@ from process import process_boxer
 # - freqpred: Arguments of frequent predicates cannot be merged.
 nonmerge = set(['sameid', 'freqpred'])
 
-
-commands = {'tokenize':
-              ['/interpret/ext/candc/bin/t',
-               '--stdin'],
-            'candc':
-              ['/interpret/ext/candc/bin/soap_client',
-               '--url', 'localhost:8888'],
-            'boxer':
-              ['/interpret/ext/candc/bin/boxer',
-               '--stdin',
-               '--semantics', 'tacitus',
-               '--resolve', 'true'],
-            'henry':
-              []}
+commands = {
+    'tokenize':
+      ['/interpret/ext/candc/bin/t',
+       '--stdin'],
+    'candc':
+      ['/interpret/ext/candc/bin/soap_client',
+       '--url', 'localhost:8888'],
+    'boxer':
+      ['/interpret/ext/candc/bin/boxer',
+       '--stdin',
+       '--semantics', 'tacitus',
+       '--resolve', 'true',
+       '--roles', 'verbnet'],
+    'henry':
+      []}
 
 
 def run_commands(cmds, data):
@@ -44,6 +49,7 @@ def run_commands(cmds, data):
 
 app = Flask(__name__)
 
+
 @app.route('/parse', methods=['POST'])
 def parse():
     data = request.get_json(force=True)['s'].encode() + b'\n'
@@ -55,6 +61,8 @@ def parse():
 
 @app.route('/interpret', methods=['POST'])
 def interpret():
+    start = time()
+
     data = request.get_json(force=True)['s'].encode() + b'\n'
 
     out, err = run_commands(['tokenize', 'candc', 'boxer'], data)
@@ -62,6 +70,12 @@ def interpret():
         return jsonify({'error': err})
 
     parse = process_boxer(out, nonmerge)
+
+    # Time elapsed in seconds.
+    elapsed = (time() - start) * 0.001
+
+    # Time left for Henry in seconds.
+    remaining = timeout - elapsed
 
     data = parse.encode() + b'\n'
     out, err = run_commands(['henry'], data)
