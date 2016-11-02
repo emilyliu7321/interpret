@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+
+import sys
+import requests
+
+host = 'localhost'
+port = '5000'
+
+if __name__ == '__main__':
+    sentence = ' '.join(sys.argv[1:])
+
+    query = {'s': sentence}
+
+    r = requests.post('http://' + host + ':' + port + '/parse', json=query)
+    if not r:
+        sys.stderr.write('Error receiving response from server.\n')
+        sys.exit(1)
+
+    response = r.json()
+
+    print(response['parse'])

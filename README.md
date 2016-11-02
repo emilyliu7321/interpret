@@ -9,5 +9,9 @@ Build and run the image:
 
 Send requests:
 ```
+; ./client Jack ate dinner.
+```
+or
+```
 ; curl -d '{"s": "Jack ate dinner."}' http://localhost:5000/parse
 ```
