@@ -5,13 +5,13 @@ import subprocess as sub
 from time import time
 from flask import Flask, request, jsonify
 
-from process import process_boxer
+from process import process_phillip, process_boxer
 
 
 # Parameters
 
-# Maximum seconds to take processing a request
-timeout = 180
+# Maximum seconds to take for inference.
+timeout = 60
 
 # Nonmerge constraints to introduce:
 # - samepred: Arguments of a predicate cannot be merged.
@@ -32,8 +32,15 @@ commands = {
        '--semantics', 'tacitus',
        '--resolve', 'true',
        '--roles', 'verbnet'],
-    'henry':
-      []}
+    'phillip':
+      ['/interpret/ext/phillip/bin/phil',
+       '-m', 'infer',
+       '-k', '/interpret/kb/compiled',
+       '-H',
+       '-c', 'lhs=depth',
+       '-c', 'ilp=weighted',
+       '-c', 'sol=lpsolve',
+       '-T', str(timeout)]}
 
 
 def run_commands(cmds, data):
@@ -61,8 +68,6 @@ def parse():
 
 @app.route('/interpret', methods=['POST'])
 def interpret():
-    start = time()
-
     data = request.get_json(force=True)['s'].encode() + b'\n'
 
     out, err = run_commands(['tokenize', 'candc', 'boxer'], data)
@@ -71,20 +76,16 @@ def interpret():
 
     parse = process_boxer(out, nonmerge)
 
-    # Time elapsed in seconds.
-    elapsed = (time() - start) * 0.001
-
-    # Time left for Henry in seconds.
-    remaining = timeout - elapsed
-
     data = parse.encode() + b'\n'
-    out, err = run_commands(['henry'], data)
+    out, err = run_commands(['phillip'], data)
     if err:
         return jsonify({'parse': parse,
                         'error': err})
 
+    interpret = process_phillip(out)
+
     return jsonify({'parse': parse,
-                    'interpret': out})
+                    'interpret': interpret})
 
 
 if __name__ == '__main__':

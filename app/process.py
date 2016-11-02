@@ -2,6 +2,16 @@ import sys
 import re
 
 from collections import defaultdict
+from bs4 import BeautifulSoup
+
+
+def process_phillip(lines):
+    s = BeautifulSoup(lines, 'lxml')
+    out = s.hypothesis.string.strip()
+    out = out.replace('  ', ' ')
+    out = out.replace(') ', ')\n   ')
+    return out
+
 
 # Pattern for parsing: id(sentence_id,..)
 sent_id_pattern = re.compile('id\((.+),.+\)')

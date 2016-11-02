@@ -11,11 +11,21 @@ if __name__ == '__main__':
 
     query = {'s': sentence}
 
-    r = requests.post('http://' + host + ':' + port + '/parse', json=query)
+    r = requests.post('http://' + host + ':' + port + '/interpret', json=query)
     if not r:
         sys.stderr.write('Error receiving response from server.\n')
         sys.exit(1)
 
     response = r.json()
 
-    print(response['parse'])
+    if 'parse' in response:
+        print('Parse:')
+        print(response['parse'])
+
+    if 'interpret' in response:
+        print('Interpret:')
+        print(response['interpret'])
+
+    if 'error' in response:
+        print('Error:')
+        print(response['error'])

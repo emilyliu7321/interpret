@@ -1,9 +1,22 @@
 #!/bin/bash
 
-cd ext/candc
+# Start C&C server for parsing inputs.
+
+pushd ext/candc
 ./bin/soap_server --server localhost:8888 \
                   --models models/boxer \
                   --candc-printer boxer \
                   > /dev/null 2> /dev/null &
-cd ../../app
+
+popd
+
+# Start Phillip ILP solver for inference.
+
+pushd ext/phillip
+./bin/phil -m compile -k /interpret/kb/compiled /interpret/kb/kb.lisp
+popd
+
+# Start web service.
+
+cd app
 ./app.py

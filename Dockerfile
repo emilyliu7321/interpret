@@ -30,7 +30,7 @@ ENV PATH /opt/conda/bin:$PATH
 
 RUN conda update -y conda
 
-RUN conda install -y flask
+RUN conda install -y flask beautifulsoup4 lxml
 
 
 # Add the C&C pipeline and compile.
@@ -73,7 +73,7 @@ RUN git clone https://github.com/kazeto/phillip.git && \
 # Add the application code to the Docker image.
 
 ADD app /interpret/app
-
+ADD kb /interpret/kb
 ADD server /interpret
 
 
