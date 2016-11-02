@@ -51,14 +51,14 @@ swiversion()
 
 ccpversion
 
-if [ -f ${PROLOG_VERSION} ]; then
-    SVN=`svnversion -n`
-    if [ `cat ${PROLOG_VERSION} | grep $SVN | wc -l` = "0" ]; then
+#if [ -f ${PROLOG_VERSION} ]; then
+#    SVN=`svnversion -n`
+#    if [ `cat ${PROLOG_VERSION} | grep $SVN | wc -l` = "0" ]; then
         swiversion
-    fi
-else
+#    fi
+#else
     swiversion
-fi
+#fi
 
 exit 0
 
