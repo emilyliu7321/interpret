@@ -26,6 +26,10 @@ if __name__ == '__main__':
         print('Interpret:')
         print(response['interpret'])
 
+    if 'graph' in response:
+        print('Proof graph URL:')
+        print(response['graph'])
+
     if 'error' in response:
         print('Error:')
         print(response['error'])

@@ -13,5 +13,5 @@ Send requests:
 ```
 or
 ```
-; curl -d '{"s": "I interrogated him."}' http://localhost:5000/parse
+; curl -d '{"s": "I interrogated him."}' http://localhost:5000/interpret
 ```
