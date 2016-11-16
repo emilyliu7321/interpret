@@ -58,7 +58,7 @@ RUN cd candc && \
 
 # Install Phillip.
 
-RUN apt-get install -q -y --fix-missing git lp-solve liblpsolve55-dev
+RUN apt-get install -q -y --fix-missing git lp-solve liblpsolve55-dev graphviz
 
 ENV CPLUS_INCLUDE_PATH /usr/include/lpsolve:$CPLUS_INCLUDE_PATH
 ENV LD_LIBRARY_PATH /usr/lib/lp_solve:$LD_LIBRARY_PATH
@@ -68,6 +68,9 @@ RUN git clone https://github.com/kazeto/phillip.git && \
     2to3 -w tools/configure.py && \
     /bin/echo -e "\ny\nn" | python ./tools/configure.py && \
     make LDFLAGS="-lcolamd -llpsolve55 -ldl"
+
+RUN 2to3 -w phillip/tools/util.py && \
+    2to3 -w phillip/tools/graphviz.py
 
 
 # Add the application code to the Docker image.

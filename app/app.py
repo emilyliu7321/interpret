@@ -3,7 +3,7 @@
 import subprocess as sub
 
 from time import time
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 
 from process import process_phillip, process_boxer
 
@@ -84,8 +84,29 @@ def interpret():
 
     interpret = process_phillip(out)
 
+    path = graph_output(out)
+
     return jsonify({'parse': parse,
-                    'interpret': interpret})
+                    'interpret': interpret,
+                    'graph': request.url_root + path})
+
+
+def graph_output(lines):
+    with open('/tmp/phillip.xml', 'w') as fout:
+        for line in lines:
+            fout.write(line)
+
+    p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
+                 '/tmp/phillip.xml'])
+    p = sub.run(['dot', '-Tpdf',
+                 '/tmp/phillip.xml.dot',
+                 '-o', '/tmp/phillip.pdf'])
+    return 'graph/phillip.pdf'
+
+
+@app.route('/graph/<graphname>', methods=['GET'])
+def graph(graphname):
+    return send_file('/tmp/' + graphname)
 
 
 if __name__ == '__main__':
