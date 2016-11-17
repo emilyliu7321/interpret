@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import os
+import sys
+import tempfile
+import re
 import subprocess as sub
 
 from time import time
@@ -86,27 +90,36 @@ def interpret():
 
     path = graph_output(out)
 
+    if path == 'error':
+        return jsonify({'parse': parse,
+                        'interpret': interpret,
+                        'error': 'Failed to generate proof graph.'})
+
     return jsonify({'parse': parse,
                     'interpret': interpret,
-                    'graph': request.url_root + path})
+                    'graph': request.url_root + 'graph/' + path})
 
 
 def graph_output(lines):
-    with open('/tmp/phillip.xml', 'w') as fout:
-        for line in lines:
-            fout.write(line)
+    with tempfile.NamedTemporaryFile(mode='w', prefix='') as temp:
+        temp.writelines(lines)
+        temp.flush()
 
-    p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
-                 '/tmp/phillip.xml'])
-    p = sub.run(['dot', '-Tpdf',
-                 '/tmp/phillip.xml.dot',
-                 '-o', '/tmp/phillip.pdf'])
-    return 'graph/phillip.pdf'
+        try:
+            p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
+                         temp.name])
+            p = sub.run(['dot', '-Tpdf', temp.name + '.dot',
+                         '-o', temp.name + '.pdf'])
+            os.remove(temp.name + '.dot')
+            return re.sub('.+/', '', temp.name)
+        except Exception as e:
+            sys.stderr.write(str(e))
+            return 'error'
 
 
 @app.route('/graph/<graphname>', methods=['GET'])
 def graph(graphname):
-    return send_file('/tmp/' + graphname)
+    return send_file(tempfile.gettempdir() + '/' + graphname + '.pdf')
 
 
 if __name__ == '__main__':
