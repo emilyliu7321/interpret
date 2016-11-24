@@ -108,7 +108,7 @@ def graph_output(lines):
         try:
             p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
                          temp.name])
-            p = sub.run(['dot', '-Tpdf', temp.name + '.dot',
+            p = sub.run(['dot', '-T pdf', temp.name + '.dot',
                          '-o', temp.name + '.pdf'])
             os.remove(temp.name + '.dot')
             return re.sub('.+/', '', temp.name)

@@ -105,7 +105,8 @@ def process_boxer(lines, nonmerge=None):
                 # Normalize POS postfixes.
                 for k, v in [('n', 'nn'), ('v', 'vb'), ('a', 'adj'),
                              ('r', 'rb'), ('p', 'in')]:
-                    if postfix == k: postfix = v
+                    if postfix == k:
+                        postfix = v
                 prop_name = pname + '-' + postfix
                 if postfix == 'in':
                     # It can be subject to nonmerge constraints.
@@ -123,8 +124,8 @@ def process_boxer(lines, nonmerge=None):
 
             # Write Henry representation of the proposition.
             out += ' (' + prop_name + prop_args + ' :1:' + \
-                   sent_id + '-' + str(prop_id_counter) + ':[' + word_id_str + \
-                   '])'
+                   sent_id + '-' + str(prop_id_counter) + ':[' + \
+                   word_id_str + '])'
 
             if not m.group(4):
                 # No arguments.
