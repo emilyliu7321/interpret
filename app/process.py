@@ -7,10 +7,13 @@ from bs4 import BeautifulSoup
 
 def process_phillip(lines):
     s = BeautifulSoup(lines, 'lxml')
-    out = s.hypothesis.string.strip()
-    out = out.replace('  ', ' ')
-    out = out.replace(') ', ')\n   ')
-    return out
+    try:
+        out = s.hypothesis.string.strip()
+        out = out.replace('  ', ' ')
+        out = out.replace(') ', ')\n   ')
+        return out
+    except:
+        sys.stderr.write('Error processing Phillip output:\n' + lines)
 
 
 # Pattern for parsing: id(sentence_id,..)
@@ -21,7 +24,6 @@ id_prop_args_pattern = re.compile('\[([^\]]*)\]:([^\[\(]+)(\((.+)\))?')
 
 # Pattern for parsing: pred_name_base-postfix
 prop_name_pattern = re.compile('(.+)-([nvarp])$')
-
 
 prepositions = set([
     'abaft', 'aboard', 'about', 'above', 'absent', 'across', 'afore', 'after',
@@ -44,13 +46,18 @@ def process_boxer(lines, nonmerge=None):
     for sending to the abductive reasoner. Add non-merge constraints, which
     can be one or more of:
     - samepred: Arguments of a predicate cannot be merged.
-    - sameid: arguments of predicates with the same ID cannot be merged.
+    - sameid: The first arguments of predicates with the same ID cannot be
+        merged.
+    - samename: None of the arguments of predicates with the same name can be
+        merged.
     - freqpred: Arguments of frequent predicates cannot be merged."""
 
     if nonmerge is None:
         nonmerge = []
 
     out = ''
+
+    id2args = defaultdict(list)
 
     for line in lines.splitlines():
         # Ignore comments.
@@ -76,6 +83,9 @@ def process_boxer(lines, nonmerge=None):
 
         # Parse propositions.
         prop_id_counter = 0
+        pred2farg = defaultdict(list)
+        id2prop = defaultdict(list)
+
         for prop in line.split(' & '):
             m = id_prop_args_pattern.match(prop)
             if not m:
@@ -94,6 +104,10 @@ def process_boxer(lines, nonmerge=None):
             if prop_id_counter > 1:
                 out += '\n     '
 
+            # Boxer sometimes fails to mark prepositions; fix.
+            if prop_name in prepositions:
+                prop_name += '-p'
+
             # Set predicate name to which nonmerge constraints are applied.
             pred4nm = None
             m2 = prop_name_pattern.match(prop_name)
@@ -111,12 +125,6 @@ def process_boxer(lines, nonmerge=None):
                 if postfix == 'in':
                     # It can be subject to nonmerge constraints.
                     pred4nm = prop_name
-            else:
-                # Boxer sometimes does not mark prepositions; fix.
-                if prop_name in prepositions:
-                    prop_name += '-in'
-                # It can be subject to nonmerge constraints.
-                pred4nm = prop_name
 
             prop_args = ''
             if m.group(4):
@@ -135,34 +143,43 @@ def process_boxer(lines, nonmerge=None):
                 # Arguments of the same predicate cannot be unified.
                 out += ' (!=' + prop_args + ')'
 
-            first_arg = m.group(4).replace(',', ' ').split()[0]
+            args = m.group(4).replace(',', ' ').split()
+            first_arg = args[0]
 
             # Generate nonmerge constraints so that propositions with the
-            # same word ids cannot be unified.
+            # same word IDs cannot be unified.
             if 'sameid' in nonmerge:
-                id2prop = defaultdict(list)
                 for id in word_id_str.split(','):
                     id2prop[id].append(first_arg)
-                for id in id2prop.keys():
-                    if len(id2prop[id]) > 1:
-                        out += ' (!='
-                        for arg in id2prop[id]:
-                            out += ' ' + arg
-                        out += ')'
+
+            if 'samename' in nonmerge:
+                id2args[prop_name].append(args)
 
             # Generate nonmerge constraints so that frequent predicates
             # cannot be unified.
             if 'freqpred' in nonmerge:
-                pred2farg = defaultdict(list)
                 if pred4nm and first_arg not in pred2farg[pred4nm]:
                     # Frequent predicates cannot be unified.
                     pred2farg[pred4nm].append(first_arg)
-                for pred in pred2farg.keys():
-                    if len(pred2farg[pred]) > 1:
-                        out += ' (!='
-                        for arg in pred2farg[pred]:
-                            out += ' ' + arg
-                        out += ')'
+
+        if 'sameid' in nonmerge:
+            for id, args in id2prop.items():
+                if len(args) > 1:
+                    out += ' (!= ' + ' '.join(args) + ')'
+
+        if 'samename' in nonmerge:
+            for id, args in id2args.items():
+                if len(args) < 2:
+                    continue
+                arity = all(len(x) == len(args[0]) for x in args)
+                if arity:
+                    for neq in apply(zip, args):
+                        out += ' (!= ' + ' '.join(neq) + ')'
+
+        if 'freqpred' in nonmerge:
+            for pred, args in pred2farg.items():
+                if len(args) > 1:
+                    out += ' (!= ' + ' '.join(args) + ')'
 
         out += '))\n'
 

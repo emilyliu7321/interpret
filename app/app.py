@@ -19,8 +19,10 @@ timeout = 60
 
 # Nonmerge constraints to introduce:
 # - samepred: Arguments of a predicate cannot be merged.
-# - sameid: arguments of predicates with the same ID cannot be merged.
+# - sameid: Arguments of predicates with the same ID cannot be merged.
 # - freqpred: Arguments of frequent predicates cannot be merged.
+# - samename: None of the arguments of predicates with the same name can be
+#     merged.
 nonmerge = set(['sameid', 'freqpred'])
 
 commands = {
@@ -108,7 +110,7 @@ def graph_output(lines):
         try:
             p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
                          temp.name])
-            p = sub.run(['dot', '-T pdf', temp.name + '.dot',
+            p = sub.run(['dot', '-Tpdf', temp.name + '.dot',
                          '-o', temp.name + '.pdf'])
             os.remove(temp.name + '.dot')
             return re.sub('.+/', '', temp.name)
