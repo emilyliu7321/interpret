@@ -6,16 +6,10 @@ import tempfile
 import re
 import subprocess as sub
 
-from time import time
 from flask import Flask, request, jsonify, send_file
 
 from process import process_phillip, process_boxer
 
-
-# Parameters
-
-# Maximum seconds to take for inference.
-timeout = 60
 
 # Nonmerge constraints to introduce:
 # - samepred: Arguments of a predicate cannot be merged.
@@ -45,8 +39,7 @@ commands = {
        '-H',
        '-c', 'lhs=depth',
        '-c', 'ilp=weighted',
-       '-c', 'sol=lpsolve',
-       '-T', str(timeout)]}
+       '-c', 'sol=lpsolve']}
 
 
 def run_commands(cmds, data):
@@ -108,10 +101,10 @@ def graph_output(lines):
         temp.flush()
 
         try:
-            p = sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
-                         temp.name])
-            p = sub.run(['dot', '-Tpdf', temp.name + '.dot',
-                         '-o', temp.name + '.pdf'])
+            sub.run(['python', '/interpret/ext/phillip/tools/graphviz.py',
+                     temp.name])
+            sub.run(['dot', '-Tpdf', temp.name + '.dot',
+                     '-o', temp.name + '.pdf'])
             os.remove(temp.name + '.dot')
             return re.sub('.+/', '', temp.name)
         except Exception as e:

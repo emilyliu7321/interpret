@@ -40,7 +40,6 @@ prepositions = set([
     'until', 'up', 'upon', 'versus', 'via', 'vice', 'with', 'within',
     'without', 'worth'])
 
-
 def process_boxer(lines, nonmerge=None):
     """Process the output of a Boxer parse to an FOL observation suitable
     for sending to the abductive reasoner. Add non-merge constraints, which
@@ -149,8 +148,8 @@ def process_boxer(lines, nonmerge=None):
             # Generate nonmerge constraints so that propositions with the
             # same word IDs cannot be unified.
             if 'sameid' in nonmerge:
-                for id in word_id_str.split(','):
-                    id2prop[id].append(first_arg)
+                for word_id in word_id_str.split(','):
+                    id2prop[word_id].append(first_arg)
 
             if 'samename' in nonmerge:
                 id2args[prop_name].append(args)
@@ -177,7 +176,7 @@ def process_boxer(lines, nonmerge=None):
                         out += ' (!= ' + ' '.join(neq) + ')'
 
         if 'freqpred' in nonmerge:
-            for pred, args in pred2farg.items():
+            for _, args in pred2farg.items():
                 if len(args) > 1:
                     out += ' (!= ' + ' '.join(args) + ')'
 

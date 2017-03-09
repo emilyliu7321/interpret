@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:8.6
 
 MAINTAINER Jonathan Gordon <jgordon@isi.edu>
 
@@ -9,11 +9,9 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -q -y --fix-missing
-RUN apt-get upgrade -q -y --fix-missing
-
-RUN apt-get install -q -y --fix-missing wget g++ bzip2 flex bison libssl-dev \
-        zlib1g-dev
+RUN apt-get update -q -y --fix-missing && \
+    apt-get install -q -y --fix-missing --no-install-recommends \
+        bison bzip2 flex g++ libssl-dev wget zlib1g-dev
 
 RUN apt-get clean -q
 
@@ -35,9 +33,10 @@ RUN conda install -y flask beautifulsoup4 lxml
 
 # Add the C&C pipeline and compile.
 
-RUN apt-get install -q -y --fix-missing swi-prolog
+RUN apt-get install -q -y --fix-missing --no-install-recommends \
+        swi-prolog
 
-ADD ext /interpret/ext
+COPY ext /interpret/ext
 
 WORKDIR /interpret/ext
 
@@ -58,7 +57,8 @@ RUN cd candc && \
 
 # Install Phillip.
 
-RUN apt-get install -q -y --fix-missing git lp-solve liblpsolve55-dev graphviz
+RUN apt-get install -q -y --fix-missing --no-install-recommends \
+        git graphviz liblpsolve55-dev lp-solve
 
 ENV CPLUS_INCLUDE_PATH /usr/include/lpsolve:$CPLUS_INCLUDE_PATH
 ENV LD_LIBRARY_PATH /usr/lib/lp_solve:$LD_LIBRARY_PATH
@@ -75,9 +75,9 @@ RUN 2to3 -w phillip/tools/util.py && \
 
 # Add the application code to the Docker image.
 
-ADD app /interpret/app
-ADD kb /interpret/kb
-ADD server /interpret
+COPY app /interpret/app
+COPY kb /interpret/kb
+COPY server /interpret
 
 
 # Run our server.
