@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -q -y --fix-missing && \
     apt-get install -q -y --fix-missing --no-install-recommends \
-        bison bzip2 flex g++ libssl-dev wget zlib1g-dev
+        bison bzip2 ca-certificates flex g++ libssl-dev make wget zlib1g-dev
 
 RUN apt-get clean -q
 
@@ -19,10 +19,10 @@ RUN apt-get clean -q
 # Install Miniconda.
 
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         -O ~/miniconda.sh --quiet && \
-    bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+         -O /tmp/miniconda.sh -q && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh
 
 ENV PATH /opt/conda/bin:$PATH
 
